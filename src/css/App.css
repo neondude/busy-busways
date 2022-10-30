@@ -1,0 +1,15 @@
+#root {
+  /* max-width: 1280px; */
+  position:absolute;
+  margin: 0px;
+  background: none;
+  height: auto;
+  z-index: 5;
+  padding: 2rem;
+  text-align: center;
+}
+
+.main-ui-container {
+  background-color: #0e0e0e;
+  padding: 20px;
+}
