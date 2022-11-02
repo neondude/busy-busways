@@ -3,23 +3,20 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import App from './components/App'
+import { NYC_CENTER } from './constants/constantsNYC'
 import { initGame } from './controllers/gameController'
 import './css/index.css'
-import { gameState } from './state/gameStateManager'
+import { gameState } from './controllers/gameStateManager'
+import { PinComponent } from './components/PinComponent'
 
 export let map;
-
-export const NYC_CENTER = {
-  "lat": 40.72272082997079,
-  "lng": -73.99463750732538
-};
 
 const loadMap = async () => {
   map = await new google.maps.Map(document.getElementById("map"), {
     center: NYC_CENTER,
-    zoom: 14,
+    zoom: 16,
     heading: 0,
-    tilt: 47.5,
+    tilt: 30,
     mapId: "188985496c7786bd",
     // gestureHandling: 'greedy',
     mapTypeControl: false,
@@ -33,12 +30,10 @@ const loadMap = async () => {
 };
 
 async function initMap() {
-  // googleLib = google;
-  console.log("init map called");
   await loadMap();
   initGame();
 
-  
+  customElements.define('pin-component',PinComponent);
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

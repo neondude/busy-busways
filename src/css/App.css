@@ -13,3 +13,17 @@
   background-color: #0e0e0e;
   padding: 20px;
 }
+
+#centerp {
+  position:absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  
+  /* unnecessary styling properties */
+  max-width: 50%;
+  text-align: center;
+  border: 1px solid blue;
+  z-index: 6;
+
+}
