@@ -7,13 +7,23 @@ export class PinComponent extends HTMLElement {
       // para.appendChild(node);
       // this.replaceChildren(para);
       let theMode;
-      if (this.hasAttribute("mode")){
+      if (this.hasAttribute("mode")) {
         theMode = this.getAttribute("mode");
       } else {
         this.setAttribute("mode", "view")
         theMode = "view"
       }
       const para = document.createElement("span");
+      // set pos attribute as thePoshash
+      para.setAttribute("pos", this.getAttribute("id"));
+      // set para element background color as black
+      para.style.backgroundColor = "black";
+      // set para element as circle
+      para.style.borderRadius = "50%";
+      // set para element width and height as 20px
+      para.style.width = "20px";
+      // set para padding as 10px
+      para.style.padding = "10px";
       para.innerText = theMode;
       this.replaceChildren(para);
     }
@@ -41,7 +51,6 @@ export class PinComponent extends HTMLElement {
 
     // // there can be other element methods and properties
     constructor() {
-      super();
-      
+      super();      
     }
   }

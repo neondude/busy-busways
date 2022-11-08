@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { map } from "../main";
-// import { map } from "../main";
 
 const useClickLocation = () => {
   //   const [pressedKey, setPressedKey] = useState({code:undefined, key:undefined})

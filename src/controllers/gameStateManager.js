@@ -1,94 +1,91 @@
 import { combineReducers, configureStore, createSlice } from "@reduxjs/toolkit";
-
-
+import { Subject, distinctUntilChanged } from "rxjs";
+import { getPositionHash } from "./markerManager";
 export let gameState;
-
 export let gameStateObservable;
+export let gameMetaSubject;
+export let gameMarkerStateSubject;
 
-const markerStateSlice = createSlice({
+export const VIEW_MODE = 'view';
+export const CHOOSABLE_MODE = 'choosable';
+export const CHOSEN_MODE = 'chosen';
+export const HIDDEN_MODE = 'hidden';
+
+
+export const markerStateSlice = createSlice({
   name: "markerState",
-  initialState: [
-    {
-      /*
+  initialState: {
+    /*
         location hash : {
           position : {lat:number, lng:number}
-          mode: view | choosable | chosen 
+          mode: view | choosable | chosen | hidden
           passengerCount: number
         }
        */
-
-    }
-  ]
-
-})
-
-const gameMetaSlice = createSlice({
-  name: "gameMeta",
-  initialState: {
-    revealProgress: 0
-  },
-  reducers: {
-    incrementRevealProgress: (state, action) => {
-      state.revealProgress += 1
-    },
-    resetRevealProgress: (state, action) => {
-      state.revealProgress = 0
-    }
-  }
-})
-
-const markerSlice = createSlice({
-  name: "marker",
-  initialState: {
-    chosenForPath : []
   },
   reducers: {
     addMarker: (state, action) => {
-      console.log("add marker action")
-        // if(state.choosenForPath.length == 2) {
-        //     state.choosenForPath.pop();
-        // }
-        state.chosenForPath.push(action.payload)
+      const { position, mode, passengerCount } = action.payload;
+      const thePosHash = getPositionHash(position);
+      state[thePosHash] = {
+        position,
+        mode,
+        passengerCount,
+      };
+    },
+    setMarkerModeView: (state, action) => {
+      const { markerPositionHash } = action.payload;
+      state[markerPositionHash].mode = "view";
+    },
+    setMarkerModeChosen: (state, action) => {
+      const { markerPositionHash } = action.payload;
+      state[markerPositionHash].mode = "chosen";
+      state[markerPositionHash].timeChosen = new Date().getTime(); // so that I can order them for the path
+    },
+    setMarkerModeChoosable: (state, action) => {
+      const { markerPositionHash } = action.payload;
+      state[markerPositionHash].mode = "choosable";
+    },
+    setAllMarkersModeChoosable: (state, action) => {
+      for (const markerPositionHash in state) {
+        state[markerPositionHash].mode = "choosable";
+      }
     },
   },
 });
 
-export const markerListSelector = (state) => {
-  return state.markerSlice.chosenForPath;
-}
-
-export const addChosenMarker = (position) => {
-  console.log("add marker")
-  gameState.dispatch(markerSlice.actions.addMarker(position))
-
-}
-
-
+export const markerStateSliceActions =  markerStateSlice.actions;
 
 
 export const initializeGameState = () => {
-
-  const gameReducers  = combineReducers({
-    markerSlice : markerSlice.reducer,
-    markerStateSlice : markerStateSlice.reducer,
-    gameMetaSlice: gameMetaSlice.reducer
+  const gameReducers = combineReducers({
+    markerStateSlice: markerStateSlice.reducer,
+    // gameMetaSlice: gameMetaSlice.reducer,
   });
 
   // function toObservable(store) {
-//   return {
-//     subscribe({ onNext }) {
-//       let dispose = store.subscribe(() => onNext(store.getState()));
-//       onNext(store.getState());
-//       return { dispose };
-//     }
-//   }
-// }
-  gameState = configureStore({reducer: gameReducers});
-    gameStateObservable = {
+  //   return {
+  //     subscribe({ onNext }) {
+  //       let dispose = store.subscribe(() => onNext(store.getState()));
+  //       onNext(store.getState());
+  //       return { dispose };
+  //     }
+  //   }
+  // }
+  gameState = configureStore({ reducer: gameReducers });
+  gameStateObservable = {
     subscribe({ onNext }) {
       let dispose = gameState.subscribe(() => onNext(gameState.getState()));
       onNext(gameState.getState());
       return { dispose };
-    }
-  }
-}
+    },
+  };
+
+  gameMarkerStateSubject = (new Subject());
+  gameStateObservable.subscribe({ onNext: (state) => {
+    gameMarkerStateSubject.next(state.markerStateSlice);
+  }});
+
+
+
+};

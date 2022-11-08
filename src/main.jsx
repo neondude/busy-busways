@@ -8,6 +8,7 @@ import { initGame } from './controllers/gameController'
 import './css/index.css'
 import { gameState } from './controllers/gameStateManager'
 import { PinComponent } from './components/PinComponent'
+import { initDirectionsService } from './controllers/pathManager'
 
 export let map;
 
@@ -31,6 +32,7 @@ const loadMap = async () => {
 
 async function initMap() {
   await loadMap();
+  await initDirectionsService();
   initGame();
 
   customElements.define('pin-component',PinComponent);
