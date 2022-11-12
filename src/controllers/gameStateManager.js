@@ -19,7 +19,10 @@ export const markerStateSlice = createSlice({
         location hash : {
           position : {lat:number, lng:number}
           mode: view | choosable | chosen | hidden
-          passengerCount: number
+          passengerCount: {
+            oval: number,
+            square: number,
+          }
         }
        */
   },
@@ -51,16 +54,54 @@ export const markerStateSlice = createSlice({
         state[markerPositionHash].mode = "choosable";
       }
     },
+    setAllMarkersModeView: (state, action) => {
+      console.log("setAllMarkersModeView");
+      for (const markerPositionHash in state) {
+        state[markerPositionHash].mode = "view";
+      }
+    }    
+  },
+});
+
+export const pathControlSlice = createSlice({
+  name: "paths",
+  initialState: {
+    /*index : {
+      pathHash: string,
+      color: string,
+    }*/
+    1: {
+      pathHash: null,
+      color: "#ff0000",
+
+    },
+    2: {
+      pathHash: null,
+      color: "#00ff00",
+
+    },
+    3: {
+      pathHash: null,
+      color: "#0000ff",
+
+    },
+  },
+  reducers: {
+    addPathHash: (state, action) => {
+      const { pathHash, index } = action.payload;
+      state[index].pathHash = pathHash;
+    },
   },
 });
 
 export const markerStateSliceActions =  markerStateSlice.actions;
+export const pathControlSliceActions =  pathControlSlice.actions;
 
 
 export const initializeGameState = () => {
   const gameReducers = combineReducers({
     markerStateSlice: markerStateSlice.reducer,
-    // gameMetaSlice: gameMetaSlice.reducer,
+    pathControlSlice: pathControlSlice.reducer,
   });
 
   // function toObservable(store) {

@@ -18,10 +18,16 @@ import { overlay, overlayUpdateSubject } from "./threeJSOverlayManager";
 import objectHash from "object-hash";
 
 let directionsService;
+let managedPaths = {};
 
 export const initDirectionsService = async () => {
   directionsService = await new google.maps.DirectionsService();
 };
+
+export const getPathHash =  (pathArray) => {
+  const hash = objectHash(pathArray, { unorderedArrays : false})
+  return hash;
+}
 
 export const getPathData = async (chosenArray) => {
   // log arguments
@@ -59,35 +65,60 @@ export const getPathData = async (chosenArray) => {
       lng: overviewPath[i].lng(),
     });
   }
+  
 
   return {
     pathArray,
-    legDistances
+    legDistances,
+    pathHash : getPathHash(pathArray)
   };
 };
 
-export const getPathHash =  (pathArray) => {
-  const hash = objectHash(pathArray, { unorderedArrays : false})
-  console.log(hash)
+export const save3dPath = (pathArray, index) => {
+  
+  dispatch(pathControlSlice.actions.addPath({ pathArray, index }));
 }
 
-
-export const draw3dPath = (pathArray) => {
+export const draw3dPath = (pathArray, color, index) => {
+  //check if path already exists in managedPaths
+  const pathHash = getPathHash(pathArray)
+  if (managedPaths[pathHash]) {
+    console.log("path already exists")
+    return;
+  }
   const scene = overlay.getScene();
   const points = pathArray.map((p) => overlay.latLngAltToVector3(p));
   const curve = new CatmullRomCurve3(points, false, "catmullrom", 0.2);
   curve.updateArcLengths();
-  const trackLine = createTrackLine(curve);
+  const trackLine = createTrackLine(curve, color, index);
   scene.add(trackLine);
-  overlayUpdateSubject.subscribe({
+
+  const trackUpdateSubscription = overlayUpdateSubject.subscribe({
     next: () => {
       trackLine.material.resolution.copy(overlay.getViewportSize());
       overlay.requestRedraw();
     },
-});
+  });
+  managedPaths[pathHash] = {
+    trackLine,
+    trackUpdateSubscription,
+  };
 }
 
-function createTrackLine(curve) {
+export const remove3dPath = (pathHash) => {
+  if (!managedPaths[pathHash]) {
+    console.log("path does not exist")
+    return;
+  }
+  const scene = overlay.getScene();
+  const { trackLine, trackUpdateSubscription } = managedPaths[pathHash];
+  scene.remove(trackLine);
+  trackUpdateSubscription.unsubscribe();
+  delete managedPaths[pathHash];
+}
+
+function createTrackLine(curve, color, index) {
+  
   const numPoints = 10 * curve.points.length;
   const curvePoints = curve.getSpacedPoints(numPoints);
   
@@ -100,10 +131,14 @@ function createTrackLine(curve) {
   const trackLine = new Line2(
     new LineGeometry(),
     new LineMaterial({
-      color: 0xd01b1b,
-      linewidth: 5
+      color: color,
+      linewidth: (20 - (index * 3)),
     })
   );
+  
+  // increase z index of trackLine to be above the map
+  trackLine.position.z += 3 * index;
+
 
   trackLine.geometry.setPositions(positions);
 

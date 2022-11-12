@@ -8,6 +8,7 @@ import {
   markerStateSliceActions,
 } from "./gameStateManager";
 
+let managedMarkers = {};
 export const markerClickSubject = new Subject();
 
 const handleMarkerClick = (markerPositionHash) => {
@@ -48,7 +49,7 @@ export const initMarkerManager = () => {
 };
 
 export const drawMarker = (position, mode, passengerCount) => {
-  console.log("drawMarker" + position.lat + " " + position.lng);
+  // console.log("drawMarker" + position.lat + " " + position.lng);
   const thePosHash = getPositionHash(position);
 
   //todo - check state instead of element
