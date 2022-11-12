@@ -9,6 +9,7 @@ import './css/index.css'
 import { gameState } from './controllers/gameStateManager'
 import { PinComponent } from './components/PinComponent'
 import { initDirectionsService } from './controllers/pathManager'
+import { initThreeJSOverlay } from './controllers/threeJSOverlayManager'
 
 export let map;
 
@@ -25,14 +26,13 @@ const loadMap = async () => {
     fullscreenControl: false,
     streetViewControl: false,
     disableDoubleClickZoom: true,
-  });
-  
-  
+  });  
 };
 
 async function initMap() {
   await loadMap();
   await initDirectionsService();
+  initThreeJSOverlay(NYC_CENTER);
   initGame();
 
   customElements.define('pin-component',PinComponent);

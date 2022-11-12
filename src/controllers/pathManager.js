@@ -1,64 +1,117 @@
+import { delay, interval, Observable, Subject, timeout } from "rxjs";
+
+import {
+  BoxGeometry,
+  CatmullRomCurve3,
+  MathUtils,
+  Mesh,
+  MeshBasicMaterial,
+  Vector3,
+} from "three";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
+
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { map } from "../main";
+import { overlay, overlayUpdateSubject } from "./threeJSOverlayManager";
+import objectHash from "object-hash";
+
 let directionsService;
 
 export const initDirectionsService = async () => {
-    directionsService = await new google.maps.DirectionsService();
-}
-export const getPathArray = async (theOrigin, theDestination) => {
+  directionsService = await new google.maps.DirectionsService();
+};
+
+export const getPathData = async (chosenArray) => {
+  // log arguments
+  let theOrigin = chosenArray[0];
+  let theDestination = chosenArray[chosenArray.length - 1];
+  let waypoints = chosenArray.slice(1, chosenArray.length - 1);
+
+  console.log("getPathArray", theOrigin, theDestination, waypoints);
+  //set default value for waypoints
+  waypoints = waypoints ?? [];
+  waypoints = waypoints.map((waypoint) => {
+    return {
+      location: waypoint,
+      stopover: true,
+    };
+  });
   const response = await directionsService.route({
     origin: theOrigin,
     destination: theDestination,
+    waypoints,
     travelMode: google.maps.TravelMode.DRIVING,
   });
-//   console.log(response)
-  return decodePolyline(response.routes[0].overview_polyline)
+  console.log("directions response", response);
+
+  let legDistances = [];
+  for (let i = 0; i < response.routes[0].legs.length; i++) {
+    legDistances.push(response.routes[0].legs[i].distance.value);
+  }
+
+  let pathArray = [];
+  const overviewPath = response.routes[0].overview_path;
+  for (let i = 0; i < overviewPath.length; i++) {
+    pathArray.push({
+      lat: overviewPath[i].lat(),
+      lng: overviewPath[i].lng(),
+    });
+  }
+
+  return {
+    pathArray,
+    legDistances
+  };
 };
 
-const decodePolyline = (encodedPath) => {
-  if (!encodedPath) {
-    return [];
+export const getPathHash =  (pathArray) => {
+  const hash = objectHash(pathArray, { unorderedArrays : false})
+  console.log(hash)
+}
+
+
+export const draw3dPath = (pathArray) => {
+  const scene = overlay.getScene();
+  const points = pathArray.map((p) => overlay.latLngAltToVector3(p));
+  const curve = new CatmullRomCurve3(points, false, "catmullrom", 0.2);
+  curve.updateArcLengths();
+  const trackLine = createTrackLine(curve);
+  scene.add(trackLine);
+  overlayUpdateSubject.subscribe({
+    next: () => {
+      trackLine.material.resolution.copy(overlay.getViewportSize());
+      overlay.requestRedraw();
+    },
+});
+}
+
+function createTrackLine(curve) {
+  const numPoints = 10 * curve.points.length;
+  const curvePoints = curve.getSpacedPoints(numPoints);
+  
+  const positions = new Float32Array(numPoints * 3);
+
+  for (let i = 0; i < numPoints; i++) {
+    curvePoints[i].toArray(positions, 3 * i);
   }
-  var poly = [];
-  var index = 0,
-    len = encodedPath.length;
-  var lat = 0,
-    lng = 0;
 
-  while (index < len) {
-    var b,
-      shift = 0,
-      result = 0;
+  const trackLine = new Line2(
+    new LineGeometry(),
+    new LineMaterial({
+      color: 0xd01b1b,
+      linewidth: 5
+    })
+  );
 
-    do {
-      b = encodedPath.charCodeAt(index++) - 63;
-      result = result | ((b & 0x1f) << shift);
-      shift += 5;
-    } while (b >= 0x20);
+  trackLine.geometry.setPositions(positions);
 
-    var dlat = (result & 1) != 0 ? ~(result >> 1) : result >> 1;
-    lat += dlat;
+  return trackLine;
+}
 
-    shift = 0;
-    result = 0;
 
-    do {
-      b = encodedPath.charCodeAt(index++) - 63;
-      result = result | ((b & 0x1f) << shift);
-      shift += 5;
-    } while (b >= 0x20);
-
-    var dlng = (result & 1) != 0 ? ~(result >> 1) : result >> 1;
-    lng += dlng;
-
-    var p = {
-      lat: lat / 1e5,
-      lng: lng / 1e5,
-    };
-    poly.push(p);
-  }
-  return poly;
-};
-
+// draw a google maps polyline
 export const drawPolyline = (thePathArray) => {
   const lineSymbol = {
     path: google.maps.SymbolPath.CIRCLE,

@@ -42,9 +42,9 @@ const displayInitialLocations = () => {
       })
     );
   };
-  // adding delay because the html element takes time to be added to the DOM
-  from([NYC_GAME[0], NYC_GAME[1]])
-    .pipe(concatMap((item) => of(item).pipe(delay(500))))
+  // adding delay because the html element takes time to be added to the DOM and i don't want the draw marker function to be called before the element is added
+  from(NYC_GAME)
+    .pipe(concatMap((item) => of(item).pipe(delay(250))))
     .subscribe((x) => {
       addMarker(x);
     });
