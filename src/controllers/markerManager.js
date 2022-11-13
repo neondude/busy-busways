@@ -31,6 +31,12 @@ const handleMarkerClick = (markerPositionHash) => {
 const handleGameMarkerStateChange = (state) => {
   // loop through all the markers in the state
   for (const markerPositionHash in state) {
+    // if any passengerCOunt is 10 or greater then game over
+    if (state[markerPositionHash].passengerCount >= 10) {
+      // throw alert and reload page after ok is pressed
+      alert("Game Over.To many passengers were waiting for a ride");
+      window.location.reload();
+    }
     // call drawMarker on each marker with the marker's position and mode from state
     drawMarker(
       state[markerPositionHash].position,
