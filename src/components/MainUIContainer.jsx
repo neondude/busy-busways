@@ -9,7 +9,7 @@ function MainContainer() {
 
   return (
     <div className="main-ui-container">
-      <ClickPosDisplay></ClickPosDisplay> 
+      {/* <ClickPosDisplay></ClickPosDisplay>  */}
       <PathCreator></PathCreator>     
     </div>
   )

@@ -103,19 +103,7 @@ const PathCreator = () => {
           />
         </>
         );
-      })}
-      <div className="path-creator">
-        {/* loop through all pathControlSlice key and values*/}
-
-        {chosenMarkers.map((marker, index) => {
-          return (
-            <div key={index}>
-              {marker.lat}, {marker.lng}
-            </div>
-          );
-        })}
-
-      </div>
+      })}      
     </>
   );
 };
