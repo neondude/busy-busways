@@ -18,7 +18,7 @@ const loadMap = async () => {
     center: NYC_CENTER,
     zoom: 16,
     heading: 29,
-    tilt: 30,
+    tilt: 10,
     mapId: "c8f830aab233c8fc",//"188985496c7786bd",
     // gestureHandling: 'greedy',
     mapTypeControl: false,

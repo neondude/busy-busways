@@ -32,16 +32,19 @@ export class PinComponent extends HTMLElement {
       // set pos attribute as thePoshash
       spanElement.setAttribute("pos", this.getAttribute("id"));
       // set para element background color as black
-      spanElement.style.backgroundColor = "black";
+      // spanElement.style.backgroundColor = "black";
       // set para element as circle
       if(theMarkerType === "oval") {
-      spanElement.style.borderRadius = "50%";
-
+      // spanElement.style.borderRadius = "50%";
+        spanElement.classList.add("pin-view-oval");
+      }
+      else {
+        spanElement.classList.add("pin-view-square");
       }
       if(theMode === "choosable" || theMode === "chosen") {
         // thick border
-        spanElement.style.borderWidth = "5px";
-        spanElement.style.borderStyle = "solid";
+        // spanElement.style.borderWidth = "5px";
+        // spanElement.style.borderStyle = "solid";
       }
       if(theMode === "chosen") {
         spanElement.style.borderColor = "yellow";
@@ -51,9 +54,9 @@ export class PinComponent extends HTMLElement {
 
         //
       // set para element width and height as 20px
-      spanElement.style.width = "20px";
+      // spanElement.style.width = "20px";
       // set para padding as 10px
-      spanElement.style.padding = "15px";
+      // spanElement.style.padding = "15px";
       spanElement.innerText = thePassengerCount;
       // set svg image as content of the para element
       //  spanElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">`

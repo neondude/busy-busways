@@ -66,3 +66,49 @@
 .path-panel button:focus {
   outline: none;
 }
+.pin-view-oval {
+  align-items: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  height: 30px;
+  justify-content: center;
+  /* padding: 12px; */
+  transition: all .3s ease-out;
+  width: 30px;
+  z-index: 200;
+  background-color: #fff;
+  border: 3px solid #403b3d;
+  color: #403b3d;
+  font-size: 16px;
+  font-weight: 600;
+}
+.pin-view-square {
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  height: 30px;
+  justify-content: center;
+  transition: all .3s ease-out;
+  width: 30px;
+  z-index: 200;
+  background-color: #fff;
+  border: 3px solid #403b3d;
+  color: #403b3d;
+  font-size: 16px;
+  font-weight: 600;
+}
+.score-card {
+  align-items: center;
+  background: #fff;
+  color: #403b3d;
+  border-radius: 50px;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  font-size: 20px;
+}

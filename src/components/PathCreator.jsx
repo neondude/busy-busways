@@ -86,7 +86,7 @@ const PathCreator = () => {
 
   return (
     <>
-      <div>{"Score: " + currentScore}</div>
+      <div className="score-card">{"Score: " + currentScore}</div>
       {Object.entries(pathControlSlice).map(([key, value]) => {
         return (<>
           <PathPanel
