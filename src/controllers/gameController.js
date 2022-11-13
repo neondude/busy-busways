@@ -47,11 +47,16 @@ const displayInitialLocations = () => {
     );
   };
   // adding delay because the html element takes time to be added to the DOM and i don't want the draw marker function to be called before the element is added
-  from(NYC_GAME)
+  from(NYC_GAME.slice(0, 2))
     .pipe(concatMap((item) => of(item).pipe(delay(250))))
     .subscribe((x) => {
       addMarker(x);
     });
+  from(NYC_GAME.slice(2))
+  .pipe(concatMap((item) => of(item).pipe(delay(15 * 1000))))
+  .subscribe((x) => {
+    addMarker(x);
+  });
 };
 
 const beginSpawningPassengers = () => {

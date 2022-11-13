@@ -150,11 +150,13 @@ export class BusAnimationManager {
     this.tmpVec3 = new Vector3();
     this.pathArray = pathArray;
     this.pathHash = getPathHash(pathArray);
+    this.totalDistance = distanceArray.reduce((a, b) => a + b, 0);
     this.distanceArray = distanceArray;
-    this.totalDuration = distanceArray.reduce((a, b) => a + b, 0);
     this.pathHash = getPathHash(pathArray);
     this.busModel = busModel;
-    this.wayPointArray = wayPointArray;
+    // this.wayPointArray = wayPointArray
+    // reverse and append wayPointArray to itself
+    this.wayPointArray = [...wayPointArray, ...wayPointArray.reverse().slice(1)];
     this.animateCurve = animateCurve;
     this.overlay = overlay;
 
@@ -166,8 +168,9 @@ export class BusAnimationManager {
       a.push(last + b);
       return a;
     }, [0]);
+    this.cumulativeDistanceArray = [...this.cumulativeDistanceArray, ...this.cumulativeDistanceArray.reverse().slice(1)]
 
-    console.log("distanceArray", distanceArray);
+    console.log("distanceArray", this.distanceArray);
     console.log("cumulative distance array",this.cumulativeDistanceArray);
    
 
@@ -177,10 +180,7 @@ export class BusAnimationManager {
   }
 
   beginAnimation(wayPointReachedCallback) {
-    this.animateCurve.getPointAt(0, this.busModel.position);
-    this.animateCurve.getTangentAt(0, this.tmpVec3);
-    this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
-    this.overlay.requestRedraw();
+    this.setCurrentBusPosition(0);
 
     this.busProgressSubscription = interval(1).subscribe((i) => {
 
@@ -196,6 +196,7 @@ export class BusAnimationManager {
       if (this.elapsedDistance === nextCheckPoint){
         if(nextCheckPoint == 0){
           this.setCurrentBusPosition(0);
+          this.distanceIndex = 0;
         }
         this.waitTime = 500;
 
@@ -203,12 +204,12 @@ export class BusAnimationManager {
 
 
         this.distanceIndex += 1;
-        if(this.distanceIndex === this.distanceArray.length +1) {
+        if(this.distanceIndex === this.cumulativeDistanceArray.length +1) {
           this.distanceIndex = 0;
         }
-        if(this.elapsedDistance === this.totalDuration) {          
-          this.elapsedDistance = 0;
-        }
+        // if(this.elapsedDistance === this.totalDistance) {          
+        //   this.elapsedDistance = 0;
+        // }
 
         // console.log("after")
         // console.log("waypoint reached", this.pathArray[this.distanceIndex]);
@@ -220,10 +221,17 @@ export class BusAnimationManager {
         return;
       }
 
-      let animationProgress = (this.elapsedDistance % this.totalDuration) / (this.totalDuration);
-      this.setCurrentBusPosition(animationProgress);
+      // let reverse = this.distanceIndex >= this.cumulativeDistanceArray.length/2;
 
-      this.elapsedDistance += 1;
+      let animationProgress = (this.elapsedDistance % this.totalDistance) / (this.totalDistance);
+      this.setCurrentBusPosition(animationProgress, reverse);
+
+      if(this.distanceIndex >= this.cumulativeDistanceArray.length/2) {
+        this.elapsedDistance -= 1;
+      } else {
+        this.elapsedDistance += 1;
+      }
+      console.log("elapsedDistance", this.elapsedDistance);
       
     });
   }
