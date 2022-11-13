@@ -39,3 +39,30 @@
     /* red border  */
     border: 1px solid red;
 }
+
+.path-panel {
+  display: flex;
+}
+.path-panel button {
+  align-items: center;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  height: 50px;
+  justify-content: center;
+  padding: 12px;
+  transition: all .3s ease-out;
+  width: 50px;
+  z-index: 200;
+  margin: 2px;
+  /* opacity: 0.8; */
+}
+.path-panel button:hover {
+  /* opacity: 1; */
+  border-color: none;
+}
+.path-panel button:focus {
+  outline: none;
+}

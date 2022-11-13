@@ -19,7 +19,7 @@ const loadMap = async () => {
     zoom: 16,
     heading: 29,
     tilt: 30,
-    mapId: "188985496c7786bd",
+    mapId: "c8f830aab233c8fc",//"188985496c7786bd",
     // gestureHandling: 'greedy',
     mapTypeControl: false,
     zoomControl: false,

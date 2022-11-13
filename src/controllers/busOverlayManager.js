@@ -224,7 +224,7 @@ export class BusAnimationManager {
       // let reverse = this.distanceIndex >= this.cumulativeDistanceArray.length/2;
 
       let animationProgress = (this.elapsedDistance % this.totalDistance) / (this.totalDistance);
-      this.setCurrentBusPosition(animationProgress, reverse);
+      this.setCurrentBusPosition(animationProgress);
 
       if(this.distanceIndex >= this.cumulativeDistanceArray.length/2) {
         this.elapsedDistance -= 1;
