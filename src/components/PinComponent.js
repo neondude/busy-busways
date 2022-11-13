@@ -47,9 +47,9 @@ export class PinComponent extends HTMLElement {
         // spanElement.style.borderStyle = "solid";
       }
       if(theMode === "chosen") {
-        spanElement.style.borderColor = "yellow";
+        spanElement.style.borderColor = "#4bab5c";//"#FFD700";
       } else if (theMode === "choosable") {
-        spanElement.style.borderColor = "red";
+        spanElement.style.borderColor = "#f1d93f"; //"#f1be3f";//"red";
       }
 
         //

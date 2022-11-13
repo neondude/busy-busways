@@ -50,11 +50,11 @@
   cursor: pointer;
   display: flex;
   flex-direction: row;
-  height: 50px;
+  height: 45px;
   justify-content: center;
   padding: 12px;
   transition: all .3s ease-out;
-  width: 50px;
+  width: 45px;
   z-index: 200;
   margin: 2px;
   /* opacity: 0.8; */
@@ -75,7 +75,6 @@
   flex-direction: row;
   height: 30px;
   justify-content: center;
-  /* padding: 12px; */
   transition: all .3s ease-out;
   width: 30px;
   z-index: 200;
