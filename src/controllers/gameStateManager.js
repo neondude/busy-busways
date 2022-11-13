@@ -19,10 +19,8 @@ export const markerStateSlice = createSlice({
         location hash : {
           position : {lat:number, lng:number}
           mode: view | choosable | chosen | hidden
-          passengerCount: {
-            oval: number,
-            square: number,
-          }
+          passengerCount: number,
+          markerType: oval | square
         }
        */
   },
@@ -34,6 +32,7 @@ export const markerStateSlice = createSlice({
         position,
         mode,
         passengerCount,
+        markerType: Object.keys(state).length % 2 === 0 ? "oval" : "square",
       };
     },
     setMarkerModeView: (state, action) => {
@@ -59,7 +58,15 @@ export const markerStateSlice = createSlice({
       for (const markerPositionHash in state) {
         state[markerPositionHash].mode = "view";
       }
-    }    
+    },
+    addRandomPassenger: (state, action) => {
+      // choose a random marker
+      const markerPositionHashes = Object.keys(state);
+      const randomMarkerPositionHash = markerPositionHashes[
+        Math.floor(Math.random() * markerPositionHashes.length)
+      ];
+      state[randomMarkerPositionHash].passengerCount += 1;
+    },
   },
 });
 

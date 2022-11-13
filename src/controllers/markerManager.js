@@ -34,7 +34,9 @@ const handleGameMarkerStateChange = (state) => {
     // call drawMarker on each marker with the marker's position and mode from state
     drawMarker(
       state[markerPositionHash].position,
-      state[markerPositionHash].mode
+      state[markerPositionHash].mode,
+      state[markerPositionHash].markerType,
+      state[markerPositionHash].passengerCount
     );
   }
 };
@@ -48,7 +50,7 @@ export const initMarkerManager = () => {
   markerClickSubject.subscribe(handleMarkerClick);
 };
 
-export const drawMarker = (position, mode, passengerCount) => {
+export const drawMarker = (position, mode, markerType, passengerCount) => {
   // console.log("drawMarker" + position.lat + " " + position.lng);
   const thePosHash = getPositionHash(position);
 
@@ -56,25 +58,28 @@ export const drawMarker = (position, mode, passengerCount) => {
   // check if html element with id thePosHash exists
   const theMarker = document.getElementById(thePosHash);
   if (theMarker) {
-    console.log("updateMarker");
+    // console.log("updateMarker");
     // if position, mode and passengerCount are the same, do nothing
-    if (theMarker.getAttribute("mode") === mode) {
-      // console.log("no update needed");
+    if (theMarker.getAttribute("mode") === mode && theMarker.getAttribute("pcount") === passengerCount) {
+      console.log("no update needed");
       return;
     }
-    updateMarker(position, mode, passengerCount);
+    updateMarker(position, mode, markerType, passengerCount);
   } else {
-    console.log("createNewMarker");
-    createNewMarker(position, mode, passengerCount);
+    // console.log("createNewMarker");
+    createNewMarker(position, mode, markerType, passengerCount);
   }
 };
 
-const createNewMarker = (position, mode, passengerCount) => {
+const createNewMarker = (position, mode, markerType, passengerCount) => {
   const thePosHash = getPositionHash(position);
   const pinElement = document.createElement("pin-component");
   pinElement.setAttribute("id", thePosHash);
   //set mode attribute to pin element
   pinElement.setAttribute("mode", mode);
+  pinElement.setAttribute("pcount", passengerCount);
+  pinElement.setAttribute("mtype", markerType);
+  pinElement.classList.add("pin-view");
   const markerView = new google.maps.marker.AdvancedMarkerView({
     map,
     position,
@@ -82,14 +87,20 @@ const createNewMarker = (position, mode, passengerCount) => {
   });
   markerView.addListener("click", ({ domEvent, latLng }) => {
     const elementId = domEvent.target.getAttribute("pos");
-    console.log("thePosHash marker click event", elementId);
     markerClickSubject.next(elementId);
   });
 };
 
-const updateMarker = (position, mode, passengerCount) => {
-  console.log("updateMarker" + position.lat + " " + position.lng);
+const updateMarker = (position, mode, markerType, passengerCount) => {
+  
   const thePosHash = getPositionHash(position);
   const theMarker = document.getElementById(thePosHash);
   theMarker.setAttribute("mode", mode);
+  theMarker.setAttribute("pcount", passengerCount);
 };
+
+export const getMarkerPcount = (position) => {
+  const thePosHash = getPositionHash(position);
+  const theMarker = document.getElementById(thePosHash);
+  return theMarker.getAttribute("pcount");
+}

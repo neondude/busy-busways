@@ -17,7 +17,7 @@ const loadMap = async () => {
   map = await new google.maps.Map(document.getElementById("map"), {
     center: NYC_CENTER,
     zoom: 16,
-    heading: 0,
+    heading: 29,
     tilt: 30,
     mapId: "188985496c7786bd",
     // gestureHandling: 'greedy',

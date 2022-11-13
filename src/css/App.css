@@ -10,8 +10,14 @@
 }
 
 .main-ui-container {
-  background-color: #0e0e0e;
+  background: none;
   padding: 20px;
+  /* algin content left */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* vertical spacing between all content */
+  gap: 10px;
 }
 
 #centerp {

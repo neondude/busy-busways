@@ -9,12 +9,14 @@ import {
   MeshBasicMaterial,
   Vector3,
 } from "three";
-import {Line2} from 'three/examples/jsm/lines/Line2.js';
-import {LineMaterial} from 'three/examples/jsm/lines/LineMaterial.js';
-import {LineGeometry} from 'three/examples/jsm/lines/LineGeometry.js';
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { map } from "../main";
+import { getPathHash } from "./pathManager";
+import { overlay } from "./threeJSOverlayManager";
 
 // export let overLayAnimationRunning = true;
 // export let overlay;
@@ -32,6 +34,8 @@ import { map } from "../main";
 //   };
 //   overlay.requestRedraw();
 // };
+
+let mangaedBusModels = {};
 
 async function loadBusModel() {
   const loader = new GLTFLoader();
@@ -53,14 +57,20 @@ async function loadBusModel() {
   });
 }
 
-export const drawAndAnimateBus = async (animationPath) => {
+export const drawAndAnimateBus = async (
+  pathArray,
+  durationArray,
+  wayPointArray
+) => {
   const scene = overlay.getScene();
   const SCALING_FACTOR = 2.5;
-  const ANIMATION_DURATION = 455 * SCALING_FACTOR;
-  
-  const animatePoints = animationPath
-    .slice(0, -1)
-    .map((p) => overlay.latLngAltToVector3(p));
+  // sum of durations
+  const ANIMATION_DURATION =
+    durationArray.reduce((a, b) => a + b, 0) * SCALING_FACTOR;
+  // const ANIMATION_DURATION = 455 * SCALING_FACTOR;
+  const pathHash = getPathHash(pathArray);
+
+  const animatePoints = pathArray.map((p) => overlay.latLngAltToVector3(p));
 
   const animateCurve = new CatmullRomCurve3(
     animatePoints,
@@ -70,85 +80,109 @@ export const drawAndAnimateBus = async (animationPath) => {
   );
   animateCurve.updateArcLengths();
 
-  let busModel = await loadBusModel()
+  let busModel = await loadBusModel();
   scene.add(busModel);
-  // .then((obj) => {
-  //   busModel = obj;
-  //   scene.add(busModel);
 
-  //   // since loading the car-model happened asynchronously, we need to
-  //   // explicitly trigger a redraw.
-  //   // overlay.requestRedraw();
-  // });
-
-  const CAR_FRONT = new Vector3(0, 1, 0);
-  const tmpVec3 = new Vector3();
-  const busProgressSubscription = interval(1).subscribe((i) => {
-    const animationProgress = (i % ANIMATION_DURATION) / ANIMATION_DURATION;
-    animateCurve.getPointAt(animationProgress, busModel.position);
-    const busLatLon = overlay.vector3ToLatLngAlt(busModel.position);
-    // {lat: 40.75791927642595,lng: -73.97764875351876 }
-    if(busLatLon.lat === 40.757919276425) {
-      console.log('busLatLon', busLatLon);
-    }
-    
-    animateCurve.getTangentAt(animationProgress, tmpVec3);
-    busModel.quaternion.setFromUnitVectors(CAR_FRONT, tmpVec3);
-    overlay.requestRedraw();
+  const busAnimationManager = new BusAnimationManager(
+    pathArray,
+    durationArray,
+    busModel,
+    wayPointArray,
+    animateCurve,
+    overlay,
+  );
+  busAnimationManager.beginAnimation(()=> {
+    console.log("waypoint reached");
   });
-  
-  // animateSubject.subscribe({
-  //   next: () => {
-  //     // trackLine.material.resolution.copy(overlay.getViewportSize())
-  //     if (!busModel) return;
 
-  //     const animationProgress =
-  //       (performance.now() % ANIMATION_DURATION) / ANIMATION_DURATION;
+  // const CAR_FRONT = new Vector3(0, 1, 0);
+  // const tmpVec3 = new Vector3();
+  // const busProgressSubscription = interval(1).subscribe((i) => {
+  //   const animationProgress = (i % ANIMATION_DURATION) / ANIMATION_DURATION;
+  //   animateCurve.getPointAt(animationProgress, busModel.position);
 
-  //     animateCurve.getPointAt(animationProgress, busModel.position);
-  //     animateCurve.getTangentAt(animationProgress, tmpVec3);
-  //     busModel.quaternion.setFromUnitVectors(CAR_FRONT, tmpVec3);
-
-  //     // overlay.requestRedraw();
-  //   },
+  //   animateCurve.getTangentAt(animationProgress, tmpVec3);
+  //   busModel.quaternion.setFromUnitVectors(CAR_FRONT, tmpVec3);
+  //   overlay.requestRedraw();
   // });
+
+  mangaedBusModels[pathHash] = {
+    busModel,
+    busAnimationManager,
+  };
 };
 
+export const removeBus = (pathHash) => {
+  // const pathHash = getPathHash(pathArray);
+  const { busModel, busAnimationManager } = mangaedBusModels[pathHash];
+  busAnimationManager.stopAnimation();
+  delete mangaedBusModels[pathHash];
+}
 
-// export const draw3dPath = (path) => {
-//   const scene = overlay.getScene();
-//   const points = path.map((p) => overlay.latLngAltToVector3(p));
-//   const curve = new CatmullRomCurve3(points, false, "catmullrom", 0.2);
-//   curve.updateArcLengths();
-//   const trackLine = createTrackLine(curve);
-//   scene.add(trackLine);
-//   animateSubject.subscribe({
-//     next: () => {
-//       trackLine.material.resolution.copy(overlay.getViewportSize());
-//       overlay.requestRedraw();
-//     },
-// });
-// }
 
-// function createTrackLine(curve) {
-//   const numPoints = 10 * curve.points.length;
-//   const curvePoints = curve.getSpacedPoints(numPoints);
-  
-//   const positions = new Float32Array(numPoints * 3);
+// a class to manage the bus object and its animation
+export class BusAnimationManager {
+  static SCALING_FACTOR = 3;// this should be whole number for simplicity
+  constructor(pathArray, durationArray, busModel, wayPointArray, animateCurve, overlay) {
+    this.CAR_FRONT = new Vector3(0, 1, 0);
+    this.tmpVec3 = new Vector3();
+    this.pathArray = pathArray;
+    this.durationArray = durationArray;
+    this.totalDuration = durationArray.reduce((a, b) => a + b, 0);
+    this.pathHash = getPathHash(pathArray);
+    this.busModel = busModel;
+    this.wayPointArray = wayPointArray;
+    this.animateCurve = animateCurve;
+    this.overlay = overlay;
 
-//   for (let i = 0; i < numPoints; i++) {
-//     curvePoints[i].toArray(positions, 3 * i);
-//   }
+    
 
-//   const trackLine = new Line2(
-//     new LineGeometry(),
-//     new LineMaterial({
-//       color: 0xd01b1b,
-//       linewidth: 5
-//     })
-//   );
+    this.durationIndex = 0;
+    this.wayPointIndex = 0;
+    this.elapsedDuration = 0;
+    this.animationProgress = 0;
+    this.waitTime = 0;
+  }
 
-//   trackLine.geometry.setPositions(positions);
+  beginAnimation(wayPointReachedCallback) {
+    this.busProgressSubscription = interval(1).subscribe((i) => {
+      // check if mod of i is equal to the duration of the current segment
+      
+      
+      if (this.waitTime > 0) {
+        
+        this.waitTime--;
+        return;
+      }
 
-//   return trackLine;
-// }
+      this.elapsedDuration++;
+
+      let currentDurationProgress = (this.elapsedDuration % (this.totalDuration * BusAnimationManager.SCALING_FACTOR))
+
+      console.log("currentDurationProgress", currentDurationProgress, (this.durationArray[this.durationIndex] * BusAnimationManager.SCALING_FACTOR));
+      
+      if (currentDurationProgress === (this.durationArray[this.durationIndex] * BusAnimationManager.SCALING_FACTOR)-1) {
+        wayPointReachedCallback(this.wayPointArray[this.wayPointIndex]);
+        this.durationIndex = this.durationIndex + 1 % this.durationArray.length;
+        this.wayPointIndex = this.wayPointIndex + 1 % this.wayPointArray.length;
+        this.waitTime = 2000;
+      }
+      this.animationProgress =
+        (this.elapsedDuration % (this.totalDuration * BusAnimationManager.SCALING_FACTOR)) /
+        (this.totalDuration * BusAnimationManager.SCALING_FACTOR);
+      this.animateCurve.getPointAt(this.animationProgress, this.busModel.position);
+
+      this.animateCurve.getTangentAt(this.animationProgress, this.tmpVec3);
+      this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
+      this.overlay.requestRedraw();
+    });
+  }
+
+  // stop the bus animation
+  stopAnimation() {
+    this.busProgressSubscription.unsubscribe();
+    this.overlay.getScene().remove(this.busModel);
+    delete this.animateCurve;
+
+  }
+}

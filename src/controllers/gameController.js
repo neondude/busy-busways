@@ -22,6 +22,7 @@ export const initGame = () => {
   initializeGameState();
   initMarkerManager();
   displayInitialLocations();
+  beginSpawningPassengers();
 };
 
 const displayInitialLocations = () => {
@@ -48,4 +49,16 @@ const displayInitialLocations = () => {
     .subscribe((x) => {
       addMarker(x);
     });
+};
+
+const beginSpawningPassengers = () => {
+  const passengerSpawnRate = 4000;
+  const passengerSpawnInterval = interval(passengerSpawnRate);
+  passengerSpawnInterval.subscribe(
+    (x) => {
+      // console.log("spawn passenger");
+      gameState.dispatch(markerStateSliceActions.addRandomPassenger());
+    }
+  );
+
 };
