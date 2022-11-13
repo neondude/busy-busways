@@ -79,17 +79,17 @@ export const pathControlSlice = createSlice({
     }*/
     1: {
       pathHash: null,
-      color: "#ff0000",
+      color: "#bf4f39",//"#ff0000",
 
     },
     2: {
       pathHash: null,
-      color: "#00ff00",
+      color: "#669555",//"#00ff00",
 
     },
     3: {
       pathHash: null,
-      color: "#0000ff",
+      color: "#3963aa",//"#0000ff",
 
     },
   },
