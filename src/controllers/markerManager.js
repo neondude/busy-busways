@@ -89,7 +89,23 @@ const createNewMarker = (position, mode, markerType, passengerCount) => {
     const elementId = domEvent.target.getAttribute("pos");
     markerClickSubject.next(elementId);
   });
+  managedMarkers[thePosHash] = markerView;
 };
+
+export const setAllMarkersModeChoosable = () => {
+  for (const markerPositionHash in managedMarkers) {
+    const theMarkerViewElement = managedMarkers[markerPositionHash].content;
+    theMarkerViewElement.setAttribute("mode", "choosable");
+  }
+};
+
+export const setAllMarkersModeView = () => {
+  for (const markerPositionHash in managedMarkers) {
+    const theMarkerViewElement = managedMarkers[markerPositionHash].content;
+    theMarkerViewElement.setAttribute("mode", "view");
+  }
+};
+
 
 const updateMarker = (position, mode, markerType, passengerCount) => {
   

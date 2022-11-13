@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { NYC_CENTER } from "../constants/constantsNYC";
 import { drawAndAnimateBus, removeBus } from "../controllers/busOverlayManager";
+import { dropOffPassenger, pickUpPassenger } from "../controllers/gameController";
 import { markerStateSliceActions, pathControlSliceActions } from "../controllers/gameStateManager";
-import { getMarkerPcount, getPositionHash } from "../controllers/markerManager";
+import { getMarkerPcount, getPositionHash, setAllMarkersModeChoosable, setAllMarkersModeView } from "../controllers/markerManager";
 import {
   draw3dPath,
   getPathData,
+  getPathHash,
   remove3dPath,
 } from "../controllers/pathManager";
 import "../css/App.css";
@@ -17,7 +19,8 @@ const PathCreator = () => {
   // use dispatch to send actions to the store
   const dispatch = useDispatch();
   const [selectedPathPanel, setSelectedPathPanel] = useState(null);
-  const [heading, setHeading] = useState(0);
+  const [heading, setHeading] = useState(map.getHeading());
+  let currentScore = useSelector((state) => state.gameScoreSlice);
   // get markerSlice state from the store
   let chosenMarkers = useSelector((state) => {
     // filter markers with mode = VIEW_MODE and sort by timeChosen
@@ -51,6 +54,7 @@ const PathCreator = () => {
     dispatch(markerStateSliceActions.setAllMarkersModeView());
     selectPathPanel(null);
   };
+
   
   const saveSelectedPath = async (index) => {
     if (chosenMarkers.length < 2) {
@@ -59,8 +63,12 @@ const PathCreator = () => {
     }
     let { pathArray, pathHash, legDistances} = await getPathData(chosenMarkers);
     draw3dPath(pathArray,pathControlSlice[index].color, index);
-    drawAndAnimateBus(pathArray, legDistances, chosenMarkers, (position) => {
-      console.log("waypoint reached", position, getPositionHash(position) )
+    drawAndAnimateBus(pathArray, legDistances, chosenMarkers, (position, pathHash) => {
+      const positionHash = getPositionHash(position);      
+      console.log("waypoint reached", position, positionHash);
+      pickUpPassenger(pathHash, positionHash);
+      dropOffPassenger(pathHash, positionHash);
+      
     });
 
     dispatch(pathControlSliceActions.addPathHash({pathHash, index}));
@@ -75,20 +83,10 @@ const PathCreator = () => {
 
   };
 
-  const addPassanger = () => {
-    dispatch(markerStateSliceActions.addRandomPassenger());
-  }
-
-  const rotateMap = () => {
-    map.setHeading(heading + 1);
-    setHeading(map.getHeading());
-  }
 
   return (
     <>
-    <button onClick={addPassanger}>Add Passanger</button>
-    {/* button to set heading */}
-    <button onClick={() => rotateMap()}>Rotate {heading}</button>
+      <div>{"Score: " + currentScore}</div>
       {Object.entries(pathControlSlice).map(([key, value]) => {
         return (<>
           <PathPanel

@@ -35,7 +35,7 @@ import { overlay } from "./threeJSOverlayManager";
 //   overlay.requestRedraw();
 // };
 
-let mangaedBusModels = {};
+let managedBusModels = {};
 
 async function loadBusModel() {
   const loader = new GLTFLoader();
@@ -92,6 +92,14 @@ export const drawAndAnimateBus = async (
     animateCurve,
     overlay,
   );
+  managedBusModels[pathHash] = {
+    busModel,
+    busAnimationManager,
+    passengerCount : {
+      oval: 0,
+      square: 0,
+    }
+  };
   busAnimationManager.beginAnimation(wayPointReachedCallback);
 
   // const CAR_FRONT = new Vector3(0, 1, 0);
@@ -105,20 +113,35 @@ export const drawAndAnimateBus = async (
   //   overlay.requestRedraw();
   // });
 
-  mangaedBusModels[pathHash] = {
-    busModel,
-    busAnimationManager,
-  };
+  
 };
 
 export const removeBus = (pathHash) => {
   // const pathHash = getPathHash(pathArray);
-  const { busModel, busAnimationManager } = mangaedBusModels[pathHash];
+  const { busModel, busAnimationManager } = managedBusModels[pathHash];
   busAnimationManager.stopAnimation();
-  delete mangaedBusModels[pathHash];
+  delete managedBusModels[pathHash];
 }
 
+export const addPassengersToBus = (pathHash, passengerCount, passengerType) => {
+  if (managedBusModels[pathHash]) {
+    managedBusModels[pathHash].passengerCount[passengerType] += passengerCount;
+    console.log("passengerCount on bus", pathHash, managedBusModels[pathHash].passengerCount);
+  } else {
+    console.log("bus not found", pathHash);
+  }
+}
 
+export const removePassengersFromBus = (pathHash, passengerType) => {
+  if (managedBusModels[pathHash]) {
+    const temp = managedBusModels[pathHash].passengerCount[passengerType];
+    managedBusModels[pathHash].passengerCount[passengerType] = 0;
+    console.log("temp dropped passengers", temp, passengerType);
+    return temp;
+  } else {
+    console.log("bus not found", pathHash);
+  }
+}
 // a class to manage the bus object and its animation
 export class BusAnimationManager {
   static SCALING_FACTOR = 3;// this should be whole number for simplicity
@@ -126,6 +149,7 @@ export class BusAnimationManager {
     this.CAR_FRONT = new Vector3(0, 1, 0);
     this.tmpVec3 = new Vector3();
     this.pathArray = pathArray;
+    this.pathHash = getPathHash(pathArray);
     this.distanceArray = distanceArray;
     this.totalDuration = distanceArray.reduce((a, b) => a + b, 0);
     this.pathHash = getPathHash(pathArray);
@@ -158,7 +182,7 @@ export class BusAnimationManager {
     this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
     this.overlay.requestRedraw();
 
-    this.busProgressSubscription = interval(1).subscribe((i) => {      
+    this.busProgressSubscription = interval(1).subscribe((i) => {
 
       
       if (this.waitTime > 0) {        
@@ -174,7 +198,10 @@ export class BusAnimationManager {
           this.setCurrentBusPosition(0);
         }
         this.waitTime = 500;
-        wayPointReachedCallback(this.wayPointArray[this.distanceIndex]);
+
+        wayPointReachedCallback(this.wayPointArray[this.distanceIndex],this.pathHash);
+
+
         this.distanceIndex += 1;
         if(this.distanceIndex === this.distanceArray.length +1) {
           this.distanceIndex = 0;
@@ -195,11 +222,6 @@ export class BusAnimationManager {
 
       let animationProgress = (this.elapsedDistance % this.totalDuration) / (this.totalDuration);
       this.setCurrentBusPosition(animationProgress);
-      // animationProgress = Math.min(Math.max(animationProgress, 0), 1);
-      // this.animateCurve.getPointAt(animationProgress, this.busModel.position);
-      // this.animateCurve.getTangentAt(animationProgress, this.tmpVec3);
-      // this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
-      // this.overlay.requestRedraw();      
 
       this.elapsedDistance += 1;
       
@@ -207,8 +229,6 @@ export class BusAnimationManager {
   }
 
   setCurrentBusPosition(animationProgress) {
-    // let animationProgress = (this.elapsedDistance % this.totalDuration) / (this.totalDuration);
-      // animationProgress = Math.min(Math.max(animationProgress, 0), 1);
       this.animateCurve.getPointAt(animationProgress, this.busModel.position);
       this.animateCurve.getTangentAt(animationProgress, this.tmpVec3);
       this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);

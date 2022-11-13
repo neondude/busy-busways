@@ -67,6 +67,10 @@ export const markerStateSlice = createSlice({
       ];
       state[randomMarkerPositionHash].passengerCount += 1;
     },
+    removeAllPassengersFromMarker: (state, action) => {
+      const { markerPositionHash } = action.payload;
+      state[markerPositionHash].passengerCount = 0;
+    }
   },
 });
 
@@ -101,14 +105,27 @@ export const pathControlSlice = createSlice({
   },
 });
 
+export const gameScoreSlice = createSlice({
+  name: "gameScore",
+  initialState: 0,
+  reducers: {
+    addScore: (state, action) => {
+      const { score } = action.payload;
+      return state + score;
+    },
+  },
+});
+
 export const markerStateSliceActions =  markerStateSlice.actions;
 export const pathControlSliceActions =  pathControlSlice.actions;
+export const gameScoreSliceActions =  gameScoreSlice.actions;
 
 
 export const initializeGameState = () => {
   const gameReducers = combineReducers({
     markerStateSlice: markerStateSlice.reducer,
     pathControlSlice: pathControlSlice.reducer,
+    gameScoreSlice: gameScoreSlice.reducer,
   });
 
   // function toObservable(store) {

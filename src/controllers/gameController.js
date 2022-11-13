@@ -16,8 +16,11 @@ import {
   gameState,
   markerStateSlice,
   VIEW_MODE,
+  gameScoreSlice,
+  gameScoreSliceActions,
 } from "./gameStateManager";
 import { initMarkerManager } from "./markerManager";
+import { addPassengersToBus, removePassengersFromBus } from "./busOverlayManager";
 export const initGame = () => {
   initializeGameState();
   initMarkerManager();
@@ -62,3 +65,19 @@ const beginSpawningPassengers = () => {
   );
 
 };
+
+export const pickUpPassenger = (pathHash, markerPositionHash) => {
+  console.log("pickup passenger", gameState.getState().markerStateSlice[markerPositionHash]);
+  const passengersAtMarker = gameState.getState().markerStateSlice[markerPositionHash].passengerCount;
+  const markerTypeOfPosition = gameState.getState().markerStateSlice[markerPositionHash].markerType;
+  gameState.dispatch(markerStateSliceActions.removeAllPassengersFromMarker({ markerPositionHash }));
+  const markerTypeOfDestination = markerTypeOfPosition === "oval" ? "square" : "oval";
+  addPassengersToBus(pathHash, passengersAtMarker, markerTypeOfDestination);
+  
+}
+
+export const dropOffPassenger = (pathHash, markerPositionHash) => {
+  const markerType = gameState.getState().markerStateSlice[markerPositionHash].markerType;
+  const passengersOnBus = removePassengersFromBus(pathHash, markerType);
+  gameState.dispatch(gameScoreSliceActions.addScore({score: passengersOnBus * 10}));
+}
