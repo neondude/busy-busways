@@ -29,6 +29,10 @@ export const getPathHash =  (pathArray) => {
   return hash;
 }
 
+export const doesPathExist = (pathHash) => {
+  return managedPaths[pathHash]? true : false;
+}
+
 export const getPathData = async (chosenArray) => {
   // log arguments
   let theOrigin = chosenArray[0];

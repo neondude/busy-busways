@@ -6,6 +6,7 @@ import { dropOffPassenger, pickUpPassenger } from "../controllers/gameController
 import { markerStateSliceActions, pathControlSliceActions } from "../controllers/gameStateManager";
 import { getMarkerPcount, getPositionHash, setAllMarkersModeChoosable, setAllMarkersModeView } from "../controllers/markerManager";
 import {
+  doesPathExist,
   draw3dPath,
   getPathData,
   getPathHash,
@@ -62,6 +63,10 @@ const PathCreator = () => {
       return;
     }
     let { pathArray, pathHash, legDistances} = await getPathData(chosenMarkers);
+    if(doesPathExist(pathHash)){
+      alert("Path already exists");
+      return;
+    }
     draw3dPath(pathArray,pathControlSlice[index].color, index);
     drawAndAnimateBus(pathArray, legDistances, chosenMarkers, (position, pathHash) => {
       const positionHash = getPositionHash(position);      
