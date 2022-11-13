@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { NYC_CENTER } from "../constants/constantsNYC";
 import { drawAndAnimateBus, removeBus } from "../controllers/busOverlayManager";
 import { markerStateSliceActions, pathControlSliceActions } from "../controllers/gameStateManager";
-import { getMarkerPcount } from "../controllers/markerManager";
+import { getMarkerPcount, getPositionHash } from "../controllers/markerManager";
 import {
   draw3dPath,
   getPathData,
@@ -59,7 +59,9 @@ const PathCreator = () => {
     }
     let { pathArray, pathHash, legDistances} = await getPathData(chosenMarkers);
     draw3dPath(pathArray,pathControlSlice[index].color, index);
-    drawAndAnimateBus(pathArray, legDistances, chosenMarkers);
+    drawAndAnimateBus(pathArray, legDistances, chosenMarkers, (position) => {
+      console.log("waypoint reached", position, getPositionHash(position) )
+    });
 
     dispatch(pathControlSliceActions.addPathHash({pathHash, index}));
     dispatch(markerStateSliceActions.setAllMarkersModeView());

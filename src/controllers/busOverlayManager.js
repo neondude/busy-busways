@@ -59,14 +59,15 @@ async function loadBusModel() {
 
 export const drawAndAnimateBus = async (
   pathArray,
-  durationArray,
-  wayPointArray
+  distanceArray,
+  wayPointArray,
+  wayPointReachedCallback
 ) => {
   const scene = overlay.getScene();
   const SCALING_FACTOR = 2.5;
   // sum of durations
   const ANIMATION_DURATION =
-    durationArray.reduce((a, b) => a + b, 0) * SCALING_FACTOR;
+    distanceArray.reduce((a, b) => a + b, 0) * SCALING_FACTOR;
   // const ANIMATION_DURATION = 455 * SCALING_FACTOR;
   const pathHash = getPathHash(pathArray);
 
@@ -85,15 +86,13 @@ export const drawAndAnimateBus = async (
 
   const busAnimationManager = new BusAnimationManager(
     pathArray,
-    durationArray,
+    distanceArray,
     busModel,
     wayPointArray,
     animateCurve,
     overlay,
   );
-  busAnimationManager.beginAnimation(()=> {
-    console.log("waypoint reached");
-  });
+  busAnimationManager.beginAnimation(wayPointReachedCallback);
 
   // const CAR_FRONT = new Vector3(0, 1, 0);
   // const tmpVec3 = new Vector3();
@@ -123,60 +122,99 @@ export const removeBus = (pathHash) => {
 // a class to manage the bus object and its animation
 export class BusAnimationManager {
   static SCALING_FACTOR = 3;// this should be whole number for simplicity
-  constructor(pathArray, durationArray, busModel, wayPointArray, animateCurve, overlay) {
+  constructor(pathArray, distanceArray, busModel, wayPointArray, animateCurve, overlay) {
     this.CAR_FRONT = new Vector3(0, 1, 0);
     this.tmpVec3 = new Vector3();
     this.pathArray = pathArray;
-    this.durationArray = durationArray;
-    this.totalDuration = durationArray.reduce((a, b) => a + b, 0);
+    this.distanceArray = distanceArray;
+    this.totalDuration = distanceArray.reduce((a, b) => a + b, 0);
     this.pathHash = getPathHash(pathArray);
     this.busModel = busModel;
     this.wayPointArray = wayPointArray;
     this.animateCurve = animateCurve;
     this.overlay = overlay;
 
-    
+    this.animateForward = true;
 
-    this.durationIndex = 0;
-    this.wayPointIndex = 0;
-    this.elapsedDuration = 0;
-    this.animationProgress = 0;
+    // cumulative sum of distanceArray
+    this.cumulativeDistanceArray = distanceArray.reduce((a, b) => {
+      const last = a[a.length - 1];
+      a.push(last + b);
+      return a;
+    }, [0]);
+
+    console.log("distanceArray", distanceArray);
+    console.log("cumulative distance array",this.cumulativeDistanceArray);
+   
+
+    this.distanceIndex = 0;
+    this.elapsedDistance = 0;
     this.waitTime = 0;
   }
 
   beginAnimation(wayPointReachedCallback) {
-    this.busProgressSubscription = interval(1).subscribe((i) => {
-      // check if mod of i is equal to the duration of the current segment
+    this.animateCurve.getPointAt(0, this.busModel.position);
+    this.animateCurve.getTangentAt(0, this.tmpVec3);
+    this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
+    this.overlay.requestRedraw();
+
+    this.busProgressSubscription = interval(1).subscribe((i) => {      
+
       
-      
-      if (this.waitTime > 0) {
-        
+      if (this.waitTime > 0) {        
         this.waitTime--;
         return;
       }
 
-      this.elapsedDuration++;
-
-      let currentDurationProgress = (this.elapsedDuration % (this.totalDuration * BusAnimationManager.SCALING_FACTOR))
-
-      console.log("currentDurationProgress", currentDurationProgress, (this.durationArray[this.durationIndex] * BusAnimationManager.SCALING_FACTOR));
       
-      if (currentDurationProgress === (this.durationArray[this.durationIndex] * BusAnimationManager.SCALING_FACTOR)-1) {
-        wayPointReachedCallback(this.wayPointArray[this.wayPointIndex]);
-        this.durationIndex = this.durationIndex + 1 % this.durationArray.length;
-        this.wayPointIndex = this.wayPointIndex + 1 % this.wayPointArray.length;
-        this.waitTime = 2000;
-      }
-      this.animationProgress =
-        (this.elapsedDuration % (this.totalDuration * BusAnimationManager.SCALING_FACTOR)) /
-        (this.totalDuration * BusAnimationManager.SCALING_FACTOR);
-      this.animateCurve.getPointAt(this.animationProgress, this.busModel.position);
+      // sum distanceArray from 0 to distanceIndex
+      let nextCheckPoint = this.cumulativeDistanceArray[this.distanceIndex];
+      if (this.elapsedDistance === nextCheckPoint){
+        if(nextCheckPoint == 0){
+          this.setCurrentBusPosition(0);
+        }
+        this.waitTime = 500;
+        wayPointReachedCallback(this.wayPointArray[this.distanceIndex]);
+        this.distanceIndex += 1;
+        if(this.distanceIndex === this.distanceArray.length +1) {
+          this.distanceIndex = 0;
+        }
+        if(this.elapsedDistance === this.totalDuration) {          
+          this.elapsedDistance = 0;
+        }
 
-      this.animateCurve.getTangentAt(this.animationProgress, this.tmpVec3);
-      this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
-      this.overlay.requestRedraw();
+        // console.log("after")
+        // console.log("waypoint reached", this.pathArray[this.distanceIndex]);
+        // console.log("elapsedDistance", this.elapsedDistance);
+        // // console.log("nextCheckPoint", nextCheckPoint);
+        // console.log("distanceIndex", this.distanceIndex);
+        // console.log("wayPointArray", this.wayPointArray);
+        // console.log("next checkpoint", this.cumulativeDistanceArray[this.distanceIndex]);
+        return;
+      }
+
+      let animationProgress = (this.elapsedDistance % this.totalDuration) / (this.totalDuration);
+      this.setCurrentBusPosition(animationProgress);
+      // animationProgress = Math.min(Math.max(animationProgress, 0), 1);
+      // this.animateCurve.getPointAt(animationProgress, this.busModel.position);
+      // this.animateCurve.getTangentAt(animationProgress, this.tmpVec3);
+      // this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
+      // this.overlay.requestRedraw();      
+
+      this.elapsedDistance += 1;
+      
     });
   }
+
+  setCurrentBusPosition(animationProgress) {
+    // let animationProgress = (this.elapsedDistance % this.totalDuration) / (this.totalDuration);
+      // animationProgress = Math.min(Math.max(animationProgress, 0), 1);
+      this.animateCurve.getPointAt(animationProgress, this.busModel.position);
+      this.animateCurve.getTangentAt(animationProgress, this.tmpVec3);
+      this.busModel.quaternion.setFromUnitVectors(this.CAR_FRONT, this.tmpVec3);
+      this.overlay.requestRedraw();    
+  }
+    
 
   // stop the bus animation
   stopAnimation() {
