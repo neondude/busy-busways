@@ -57,6 +57,14 @@ const displayInitialLocations = () => {
   .subscribe((x) => {
     addMarker(x);
   });
+
+  // call function after 15 seconds
+  setTimeout(() => {
+    // if map zoom level greater than 15, then set it as 15
+    if (map.getZoom() > 15) {
+      map.setZoom(15);
+    }
+  }, 15 * 1000 * 7);
 };
 
 const beginSpawningPassengers = () => {
