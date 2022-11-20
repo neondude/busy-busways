@@ -22,7 +22,8 @@ import {
 import { initMarkerManager } from "./markerManager";
 import { addPassengersToBus, removePassengersFromBus } from "./busOverlayManager";
 
-let passengerSpawnRate = 4000;// initial spawn rate is 4 seconds
+let initialSpawnRate = 5 * 1000; // initial spawn rate is 4 seconds
+let passengerSpawnRate;
 let gameStartTime;
 let passengerSpawnAudio;
 
@@ -78,7 +79,7 @@ const displayInitialLocations = () => {
 const beginSpawningPassengers = () => {
   // update passenger spawn rate based on gameStartTime. The passenger spawn rate will decrease as the game progress.
   // the passenger spawn rate will be 4 seconds at the start of the game and will decrease by 0.5 seconds every 10 seconds
-  passengerSpawnRate = 4000 - Math.floor((new Date().getTime() - gameStartTime) / (10 * 1000)) * 500;
+  passengerSpawnRate = initialSpawnRate - Math.floor((new Date().getTime() - gameStartTime) / (15 * 1000)) * 500;
 
   // call set timeout function at passengerSpawnRate
   setTimeout(() => {
