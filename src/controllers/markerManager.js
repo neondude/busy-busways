@@ -72,7 +72,7 @@ export const drawMarker = (position, mode, markerType, passengerCount) => {
   if (theMarker) {
     // console.log("updateMarker");
     // if position, mode and passengerCount are the same, do nothing
-    if (theMarker.getAttribute("mode") === mode && theMarker.getAttribute("pcount") === passengerCount) {
+    if (theMarker.getAttribute("mode") === mode && theMarker.getAttribute("pcount") === passengerCount.toString()) {
       console.log("no update needed");
       return;
     }
@@ -120,7 +120,7 @@ export const setAllMarkersModeView = () => {
 
 
 const updateMarker = (position, mode, markerType, passengerCount) => {
-  
+  console.log("updateMarker");
   const thePosHash = getPositionHash(position);
   const theMarker = document.getElementById(thePosHash);
   theMarker.setAttribute("mode", mode);
