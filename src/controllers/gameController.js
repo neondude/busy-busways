@@ -24,6 +24,7 @@ import { addPassengersToBus, removePassengersFromBus } from "./busOverlayManager
 
 let passengerSpawnRate = 4000;// initial spawn rate is 4 seconds
 let gameStartTime;
+let passengerSpawnAudio;
 
 export const initGame = () => {
   initializeGameState();
@@ -31,6 +32,7 @@ export const initGame = () => {
   displayInitialLocations();
   // set gameStartTime to current time
   gameStartTime = new Date().getTime();
+  passengerSpawnAudio = new Audio("/assets/drop_003.ogg");
   beginSpawningPassengers()
 };
 
@@ -81,6 +83,10 @@ const beginSpawningPassengers = () => {
   // call set timeout function at passengerSpawnRate
   setTimeout(() => {
     gameState.dispatch(markerStateSliceActions.addRandomPassenger());
+    // check if the passengerSpawnAdio is loaded
+    if (passengerSpawnAudio.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
+      passengerSpawnAudio.play();
+    }
     beginSpawningPassengers();
   }, passengerSpawnRate);
 
