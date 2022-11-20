@@ -17,6 +17,7 @@ import { map } from "../main";
 import PathPanel from "./PathPanel";
 
 const PathCreator = () => {
+  const [showInstructions, setShowInstructions] = useState(false);
   // use dispatch to send actions to the store
   const dispatch = useDispatch();
   const [selectedPathPanel, setSelectedPathPanel] = useState(null);
@@ -106,9 +107,21 @@ const PathCreator = () => {
             onClickSave={()=>saveSelectedPath(key)}
             showPathPanel={selectedPathPanel === key}
           />
-        </>
+        </> 
         );
-      })}      
+      })}
+      {/* button to show and hide */}
+      <div className="path-panel">
+        <button onClick={()=>setShowInstructions(!showInstructions)}>?</button>
+      </div>
+      {showInstructions && <pre style={{whiteSpace:"pre-line" }} className="instruction-card">
+        {`- Passengers will be spawn at random markers.
+        - You will gain 10 points if a passenger at a circle marker is dropppd off at a square marker and vice versa.
+        - The game is over when any marker has 10 passengers.
+        - You can create a path by selecting 2 or more markers and then selecting the save button.
+        - You can destroy a path by clicking on a colored circle and selecting the trash button.`} 
+        
+        </pre>}
     </>
   );
 };

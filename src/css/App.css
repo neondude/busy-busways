@@ -111,3 +111,15 @@
   padding: 10px;
   font-size: 20px;
 }
+.instruction-card {
+  max-width: 32rem;
+  text-align: left;
+  align-items: center;
+  background: #fff;
+  color: #403b3d;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  font-size: 20px;
+}
